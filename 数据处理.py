@@ -8,8 +8,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 #中文乱码处理
-plt.rcParams['font.sans-serif'] = ['SimHei']
-# Matplotlib中设置字体-黑体，解决Matplotlib中文乱码问题
+plt.rcParams['font.sans-serif'] = 'SimHei' #显示中文不乱码
 plt.rcParams['axes.unicode_minus'] = False
 #性别向量化
 def set_sex(data):
@@ -36,6 +35,7 @@ def set_generation(data):
     generation_map = {vol:ii for ii,vol in enumerate(set(data['generation']))}
     data['generation'] = data['generation'].map(generation_map)
     return data
+
 def set_gdp_str_to_float(data):
     def gdf_to_float(gdp_string):
         return float(gdp_string.replace(',',''))
@@ -60,18 +60,17 @@ def get_correlation_coefficient(data):
     plt.show()
 #统计31年各国家自杀人数
 def get_die_sum_for_country(data):
-    suic_sum = pd.DataFrame(data['suicides_no'].groupby(data['country']).sum())
-    suic_sum = suic_sum.reset_index().sort_index(by='suicides_no', ascending=False)
-    most_cont = suic_sum
-    fig = plt.figure(figsize=(20, 10))
+    country_list = set(data['country'])
+    people_sum = []
+    for country_ in country_list:
+        people_sum.append(sum(data[data['country']==country_]['suicides_no'].values))
+    country = country_list
+    for i in range(len(country_list)):
+        if people_sum[i]>50000:
+            print('国家:'+list(country_list)[i] + '自杀人数:'+str(people_sum[i]))
     plt.title('Count of suicides for 31 years',fontdict={'size' : 25})
-    sns.set(font_scale=1.5)
-    sns.barplot(y='suicides_no', x='country', data=most_cont, palette="Blues_d")
-    plt.xticks(rotation=270)
-    plt.xticks(size=20)
-    plt.yticks(size=20)
-    plt.ylabel('数量',fontdict={'size' : 25})
-    plt.xlabel('country',fontdict={'size' : 25})
+    #sns.set(font_scale=1.5)
+    plt.pie(people_sum)
     plt.tight_layout()
     plt.show()
 #统计每年自杀人数
@@ -121,14 +120,14 @@ def train_test(data):
     svm_pred = svm_model.predict(X_test)
     svm_score = svm_model.score(X_test,y_test)
     svm_loss = explained_variance_score(y_test,svm_pred)
-    gradient_pred = gradient_model.predict(y_test)
+    gradient_pred = gradient_model.predict(X_test)
     gradient_score = gradient_model.score(X_test,y_test)
     gradient_loss = explained_variance_score(y_test,gradient_pred)
-    print('knn模型loss为:'+str(knn_loss))
+    # print('knn模型loss为:'+str(knn_loss))
     print('knn模型准确率:'+str(knn_score))
-    print('svm模型loss为:'+str(svm_loss))
+    # print('svm模型loss为:'+str(svm_loss))
     print('svm模型准确率:'+str(svm_score))
-    print('提升树模型loss为:'+str(gradient_loss))
+    # print('提升树模型loss为:'+str(gradient_loss))
     print('提升树模型准确率为:'+str(gradient_score))
     x_label = np.linspace(1,len(y_test),len(y_test))
     plt.plot(x_label,y_test)
@@ -140,9 +139,9 @@ def train_test(data):
 if __name__ == '__main__':
     data = pd.read_csv('master.csv')
     # 查看含有缺失值的列
-    # print(data.isnull().any())
+    print(data.isnull().any())
     data = data.dropna()
-    # print(data.isnull().any())
+    print(data.isnull().any())
     # print(set_sex(data)['sex'])
     # print(set_age(data)['age'])
     #print(set_generation(data)['generation'])
@@ -151,7 +150,7 @@ if __name__ == '__main__':
     data = set_gdp_str_to_float(set_generation(set_age(set_sex(data))))
     #print(data.info())
     print(data[['suicides_no','population','suicides/100k pop','gdp_per_capita ($)']].describe())
-    get_correlation_coefficient(data)
-    get_die_sum_for_country(data)
-    get_die_sum_for_year(data)
+    #get_correlation_coefficient(data)
+    #get_die_sum_for_country(data)
+    #get_die_sum_for_year(data)
     train_test(data)
